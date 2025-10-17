@@ -1,0 +1,11 @@
+k8s:
+  api_server: "https://<api_server>:6443"
+  ca_cert: "server_tls/ca.crt"
+
+tls:
+  server_cert: "server_tls/server.crt"
+  server_key: "server_tls/server.key"
+
+auth:
+  token: "eyJhbGciOiJSUzI1NiIsImtpZCI..."
+

@@ -1,0 +1,171 @@
+# custom-api-loca-deploy.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: custom-api-local-sa
+  namespace: custom-api-local-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-api-local-dep
+  namespace: custom-api-local-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-api-server
+  template:
+    metadata:
+      labels:
+        app: custom-api-server
+    spec:
+      serviceAccountName: custom-api-local-sa
+      containers:
+      - name: custom-api
+        image: 192.168.0.130:8086/test:v1.0.28
+        ports:
+        - containerPort: 8443
+        env:
+        - name: NAMESPACE_TEAM_LABEL
+          value: "team"
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: tls
+        secret:
+          secretName: custom-api-tls
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-api-local-svc
+  namespace: custom-api-local-ns
+spec:
+  selector:
+    app: custom-api-server
+  ports:
+  - port: 443
+    targetPort: 8443
+    protocol: TCP
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-api-local-namespace-reader
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-api-local-namespace-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: custom-api-local-sa
+  namespace: custom-api-local-ns
+roleRef:
+  kind: ClusterRole
+  name: custom-api-local-namespace-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1.custom.api.local
+spec:
+  service:
+    name: custom-api-local-svc
+    namespace: custom-api-local-ns
+  group: custom.api.local
+  version: v1
+  insecureSkipTLSVerify: true
+  groupPriorityMinimum: 2000
+  versionPriority: 10
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-api-local-reader
+rules:
+- apiGroups: ["custom.api.local"]
+  resources: ["whoami", "mynamespace"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-api-local-reader-binding-ali
+subjects:
+- kind: User
+  name: ali
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: custom-api-local-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-api-local-reader-binding-reza
+subjects:
+- kind: User
+  name: reza
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: custom-api-local-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: subjectaccessreview-runner
+rules:
+- apiGroups: ["authorization.k8s.io"]
+  resources: ["subjectaccessreviews"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["list", "get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: subjectaccessreview-runner-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: subjectaccessreview-runner
+subjects:
+- kind: ServiceAccount
+  name: custom-api-local-sa
+  namespace: custom-api-local-ns
+
+
+
+
