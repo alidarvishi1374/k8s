@@ -34,27 +34,38 @@ spec:
           mountPath: /tls
           readOnly: true
         livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8443
-            scheme: HTTPS
+          exec:
+            command:
+            - python3
+            - -c
+            - |
+              import requests
+              r = requests.get(
+                  "https://localhost:8443/healthz",
+                  cert=("/tls/tls.crt", "/tls/tls.key"),
+                  verify="/ca/front-proxy-ca.crt"
+              )
+              assert r.status_code == 200
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8443
-            scheme: HTTPS
+          exec:
+            command:
+            - python3
+            - -c
+            - |
+              import requests
+              r = requests.get(
+                  "https://localhost:8443/healthz",
+                  cert=("/tls/tls.crt", "/tls/tls.key"),
+                  verify="/ca/front-proxy-ca.crt"
+              )
+              assert r.status_code == 200
           initialDelaySeconds: 5
           periodSeconds: 10
           timeoutSeconds: 5
-      volumes:
-      - name: tls
-        secret:
-          secretName: custom-api-tls
-
 ---
 apiVersion: v1
 kind: Service
@@ -102,9 +113,9 @@ spec:
     namespace: custom-api-local-ns
   group: custom.api.local
   version: v1
-  insecureSkipTLSVerify: true
   groupPriorityMinimum: 2000
   versionPriority: 10
+  caBundle: <Base64 of /etc/kubernetes/pki/front-proxy-ca.crt >
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

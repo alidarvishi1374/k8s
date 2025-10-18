@@ -139,8 +139,36 @@ Expose `apis/custom.api.local/v1` resources:
 ```bash
 openssl genrsa -out tls.key 2048
 openssl req -new -key tls.key -out tls.csr -config tls.cnf
-openssl x509 -req -in tls.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out tls.crt -days 36500 -extensions req_ext -extfile tls.cnf
-kubectl create secret tls custom-api-tls --cert=tls.crt --key=tls.key -n kube-system
+openssl x509 -req -in tls.csr   -CA /etc/kubernetes/pki/front-proxy-ca.crt   -CAkey /etc/kubernetes/pki/front-proxy-ca.key   -CAcreateserial   -out tls.crt -days 365   -extensions req_ext -extfile tls.conf
+kubectl create secret tls custom-api-tls --cert=tls.crt --key=tls.key -n custom-api-local-ns
+kubectl create secret generic proxy-ca-secret --from-file=ca.crt=/etc/kubernetes/pki/front-proxy-ca.crt -n custom-api-local-ns
+```
+## Example tls.conf
+```bash
+[ req ]
+default_bits       = 2048
+prompt             = no
+default_md         = sha256
+req_extensions     = req_ext
+distinguished_name = dn
+
+[ dn ]
+C  = FR
+ST = Paris
+L  = Paris
+O  = CustomAPI
+CN = custom-api-local-svc.custom-api-local-ns.svc
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = custom-api-local-svc
+DNS.2 = custom-api-local-svc.custom-api-local-ns
+DNS.3 = custom-api-local-svc.custom-api-local-ns.svc
+DNS.4 = custom-api-local-svc.custom-api-local-ns.svc.cluster.local
+DNS.5 = localhost
+IP.1  = 10.107.68.159
 ```
 
 * Recommended: use `caBundle` in APIService for secure TLS verification.
@@ -149,7 +177,7 @@ kubectl create secret tls custom-api-tls --cert=tls.crt --key=tls.key -n kube-sy
 
 ## Security considerations & recommendations
 
-* Avoid `insecureSkipTLSVerify=true` in production.
+* Avoid `insecureSkipTLSVerify=true` in production and use Base64 of /etc/kubernetes/pki/front-proxy-ca.crt in caBundle
 * Ensure proxy service account has impersonation RBAC.
 * Support multiple `Impersonate-Group` headers if cert has multiple groups.
 * Enable apiserver audit logs.

@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from kubernetes import client, config
 import os, traceback, logging
 from datetime import datetime, timezone
+import ssl
 
 
 
@@ -236,7 +237,15 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8443))
     cert = "/tls/tls.crt"
     key = "/tls/tls.key"
-    ssl_ctx = (cert, key) if os.path.exists(cert) and os.path.exists(key) else None
+    ca = "/tls/front-proxy-ca.crt"
+    if os.path.exists(cert) and os.path.exists(key):
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_ctx.load_cert_chain(certfile=cert, keyfile=key)
+        ssl_ctx.load_verify_locations(cafile=ca)
+        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+    else:
+        ssl_ctx = None
     logger.info(f"Starting server on port {port} (TLS={'enabled' if ssl_ctx else 'disabled'})")
     app.run(host="0.0.0.0", port=port, ssl_context=ssl_ctx)
+
 
