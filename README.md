@@ -1,4 +1,4 @@
-# Kubernetes Dashboard Extensions
+# Kubernetes Extensions
 
 This repository contains a collection of tools designed to extend and enhance the functionality of the Kubernetes . Each subproject serves a specific role in improving observability, security, and automation across Kubernetes clusters.
 
