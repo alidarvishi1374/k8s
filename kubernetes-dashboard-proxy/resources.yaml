@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ns-access-sa
+  namespace: kubernetes-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ns-access-checker
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get","list"]
+- apiGroups: ["authorization.k8s.io"]
+  resources: ["subjectaccessreviews"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ns-access-checker-binding
+subjects:
+- kind: ServiceAccount
+  name: ns-access-sa
+  namespace: kubernetes-dashboard
+roleRef:
+  kind: ClusterRole
+  name: ns-access-checker
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubernetes-dashboard-proxy
+  namespace: kubernetes-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxy
+  template:
+    metadata:
+      labels:
+        app: proxy
+    spec:
+      serviceAccountName: ns-access-sa
+      containers:
+      - name: proxy
+        image: <image>
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy-svc
+  namespace: kubernetes-dashboard
+spec:
+  selector:
+    app: proxy
+  ports:
+  - port: 80
+    targetPort: 80
+
