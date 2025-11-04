@@ -102,40 +102,42 @@ def whoami():
             "kind": "NamespaceList",
             "metadata": {},
             "items": [response]
-        }), 200, {"Content-Type": "application/json"}    
+        }), 200, {"Content-Type": "application/json"}
 
 # ---------------------------
 @app.route("/apis/custom.api.local/v1/mynamespace")
 def mynamespace():
     user = request.headers.get("X-Remote-User", "")
-    groups_header = request.headers.get("X-Remote-Group", "")
-    groups = [g for g in (groups_header.split(",") if groups_header else []) if g and not g.startswith("system:")]
+    logger.info(f"Request from user: {user}")
 
-    if not groups:
-        logger.warning(f"Access denied: No group found for user '{user}'")
-        fake_item = {
-            "metadata": {
-                "name": "",
-                "annotations": {"custom-message": f"User '{user}' has no accessible namespaces"}
-            }
-        }
-        return jsonify({
-            "apiVersion": "v1",
-            "kind": "NamespaceList",
-            "metadata": {},
-            "items": [fake_item]
-        }), 200, {"Content-Type": "application/json"}
+    try:
+        parts = user.split(":")
+        if len(parts) >= 4:
+            sa_name = parts[-1]  
+            team_parts = sa_name.split("-")
+            if len(team_parts) == 3:
+                team_name = team_parts[1]
+            elif len(team_parts) > 3:
+                team_name = "-".join(team_parts[1:-1])
+            else:
+                team_name = "unknown"
+        else:
+            team_name = "unknown"
+    except Exception as e:
+        logger.error(f"Failed to extract team name from user '{user}': {e}")
+        team_name = "unknown"
+
+    logger.info(f"Extracted team name: {team_name}")
 
     try:
         sar = client.V1SubjectAccessReview(
             spec=client.V1SubjectAccessReviewSpec(
                 user=user,
-                groups=groups,
                 resource_attributes=client.V1ResourceAttributes(
                     verb="list",
                     resource="namespaces",
-                    group="",
-                ),
+                    group=""
+                )
             )
         )
         sar_resp = auth_v1.create_subject_access_review(body=sar)
@@ -151,6 +153,7 @@ def mynamespace():
             "reason": "InternalError",
             "code": 500
         }), 500
+
 
     try:
         ns_list = v1.list_namespace()
@@ -169,7 +172,7 @@ def mynamespace():
     if not user_can_list:
         items = [
             ns for ns in items
-            if ns.metadata.labels and ns.metadata.labels.get(NAMESPACE_TEAM_LABEL) in groups
+            if ns.metadata.labels and ns.metadata.labels.get(NAMESPACE_TEAM_LABEL) == team_name
         ]
 
     namespaces = []
@@ -186,16 +189,13 @@ def mynamespace():
 
     if not namespaces:
         now_iso = datetime.now(timezone.utc).isoformat()
-        fake_item = {
+        namespaces.append({
             "metadata": {
-                "name": f"No namespaces for user '{user}'",
+                "name": f"No namespaces found for team '{team_name}' (user '{user}')",
                 "creationTimestamp": now_iso
             },
-            "status": {
-                "phase": "Unknown"
-            }
-        }
-        namespaces.append(fake_item)
+            "status": {"phase": "Unknown"}
+        })
 
     result = {
         "kind": "NamespaceList",
@@ -205,6 +205,7 @@ def mynamespace():
     }
 
     return jsonify(result), 200, {"Content-Type": "application/json"}
+
 
 
 # ---------------------------
@@ -237,7 +238,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8443))
     cert = "/tls/tls.crt"
     key = "/tls/tls.key"
-    ca = "/tls/front-proxy-ca.crt"
+    ca = "/ca/front-proxy-ca.crt"
     if os.path.exists(cert) and os.path.exists(key):
         ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_ctx.load_cert_chain(certfile=cert, keyfile=key)
@@ -245,7 +246,6 @@ if __name__ == "__main__":
         ssl_ctx.verify_mode = ssl.CERT_REQUIRED
     else:
         ssl_ctx = None
+    # ssl_ctx = (cert, key) if os.path.exists(cert) and os.path.exists(key) else None
     logger.info(f"Starting server on port {port} (TLS={'enabled' if ssl_ctx else 'disabled'})")
     app.run(host="0.0.0.0", port=port, ssl_context=ssl_ctx)
-
-

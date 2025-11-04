@@ -77,7 +77,7 @@ Expose `apis/custom.api.local/v1` resources:
 1. **Read headers:**
 
    * `X-Remote-User` → CN from proxy.
-   * `X-Remote-Group` → CSV of groups from proxy, filtering out `system:*`.
+
 2. **SAR:**
 
    * Constructs `V1SubjectAccessReview` with user, groups, resource_attributes (verb=`list`, resource=`namespaces`).
@@ -215,12 +215,6 @@ openssl x509 -in tls.crt -noout -text | grep -A2 "Subject Alternative Name"
 ```bash
 kubectl get apiservices
 kubectl describe apiservice v1.custom.api.local
-```
-
-* **Test SAR:**
-
-```bash
-kubectl auth can-i list namespaces --as=someuser --as-group=team-a
 ```
 
 * **Debug proxy:**
