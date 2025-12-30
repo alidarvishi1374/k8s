@@ -26,7 +26,7 @@ tls-bootstrap:
         - apiGroups: ["*"]
           apiVersions: ["*"]
           operations: ["CREATE", "UPDATE", "DELETE"]
-          resources: ["pods", "services"]
+          resources: ["pods", "services", "namespaces"]
 
     validating:
       name: internal-validator.example.com
