@@ -1,0 +1,12 @@
+apiVersion: policy.example.com/v1
+kind: ClusterCelValidationPolicy
+metadata:
+  name: deny-test-pods
+spec:
+  match:
+    resources: ["Deployment"]
+    operations: ["CREATE"]
+  validations:
+    - enforcement: warn
+      expression: "!object['metadata']['name'].startsWith('test')"
+      messageExpression: '"User " + request["userInfo"]["username"] + " is not allowed to create this resource"'

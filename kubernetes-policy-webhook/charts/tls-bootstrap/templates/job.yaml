@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tls-bootstrap
+  namespace: {{ .Values.namespace }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 0
+  template:
+    spec:
+      serviceAccountName: tls-bootstrap
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: POD_NAMESPACE
+              value: {{ .Values.namespace }}
+            - name: MUTATING_CONFIG
+              value: {{ toJson .Values.webhook.mutating | quote }}
+            - name: VALIDATING_CONFIG
+              value: {{ toJson .Values.webhook.validating | quote }}
+          volumeMounts:
+            - name: csr-config
+              mountPath: /work/csr.conf
+              subPath: csr.conf
+      volumes:
+        - name: csr-config
+          configMap:
+            name: csr-config

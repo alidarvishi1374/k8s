@@ -1,0 +1,13 @@
+apiVersion: policy.example.com/v1
+kind: ClusterCelMutationPolicy
+metadata:
+  name: cluster-add-env-label
+spec:
+  match:
+    resources:
+      - Pod
+      - Namespace
+    operations:
+      - CREATE
+  labels:
+    env: "dev"

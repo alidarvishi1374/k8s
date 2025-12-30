@@ -1,0 +1,16 @@
+apiVersion: policy.example.com/v1
+kind: NamespaceCelValidationPolicy
+metadata:
+  name: deny-nginx
+  namespace: default
+spec:
+  match:
+    resources: ["Deployment"]
+    operations: ["CREATE"]
+  validations:
+    - enforcement: enforce
+      expression: "object['spec']['template']['spec']['containers'].all(c, c['image'] != 'nginx')"
+      messageExpression: "'nginx is not allowed in default namespace'"
+    - enforcement: enforce
+      expression: "!object['metadata']['name'].startsWith('test')"
+      messageExpression: "'deployments starting with test are not allowed'"

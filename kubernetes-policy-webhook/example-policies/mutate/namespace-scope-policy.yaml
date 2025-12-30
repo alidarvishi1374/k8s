@@ -1,0 +1,14 @@
+apiVersion: policy.example.com/v1
+kind: NamespaceCelMutationPolicy
+metadata:
+  name: ns-add-team-label
+  namespace: ali
+spec:
+  match:
+    resources:
+      - Pod
+      - Deployment
+    operations:
+      - CREATE
+  labels:
+    team: "sre"

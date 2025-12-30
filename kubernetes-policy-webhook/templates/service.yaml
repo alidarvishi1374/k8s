@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: policy-webhook
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: policy-webhook
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443
+  type: ClusterIP

@@ -1,0 +1,43 @@
+namespace: policy-engine
+
+image:
+  repository: ghcr.io/alidarvishi1374
+  name: policy-webhook
+  tag: v0.1.0
+  pullPolicy: IfNotPresent
+
+tls-bootstrap:
+  enabled: true
+
+  namespace: policy-engine
+
+  image:
+    repository: ghcr.io/alidarvishi1374
+    name: tls-bootstrap
+    tag: v0.1.0
+    pullPolicy: IfNotPresent
+
+  webhook:
+    mutating:
+      name: internal-mutator.example.com
+      failurePolicy: Ignore
+      timeoutSeconds: 5
+      rules:
+        - apiGroups: ["*"]
+          apiVersions: ["*"]
+          operations: ["CREATE", "UPDATE", "DELETE"]
+          resources: ["pods", "services"]
+
+    validating:
+      name: internal-validator.example.com
+      failurePolicy: Fail
+      timeoutSeconds: 10
+      rules:
+        - apiGroups: ["*"]
+          apiVersions: ["*"]
+          operations: ["CREATE", "UPDATE", "DELETE", "CONNECT"]
+          resources: ["*"]
+      matchConditions:
+        - name: include-req
+          expression: "request.userInfo.groups.exists(g, g == 'sre')"
+          matchPolicy: Equivalent

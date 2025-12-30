@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy-webhook
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: policy-webhook
+  template:
+    metadata:
+      labels:
+        app: policy-webhook
+    spec:
+      serviceAccountName: policy-webhook
+      containers:
+        - name: policy-webhook
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8443
+              name: https
+
+          volumeMounts:
+            - name: webhook-tls
+              mountPath: /app/certs
+              readOnly: true
+
+          # -------------------------
+          # Liveness Probe
+          # -------------------------
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >
+                  curl --silent --fail
+                  --cacert /app/certs/ca.crt
+                  https://localhost:8443/health
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # -------------------------
+          # Readiness Probe
+          # -------------------------
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >
+                  curl --silent --fail
+                  --cacert /app/certs/ca.crt
+                  https://localhost:8443/health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      volumes:
+        - name: webhook-tls
+          secret:
+            secretName: webhook-tls
