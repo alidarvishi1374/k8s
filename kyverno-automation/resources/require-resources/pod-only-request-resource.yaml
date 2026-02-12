@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-only-request-resource
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"

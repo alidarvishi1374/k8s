@@ -1,0 +1,83 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: require-frontend-name
+policies:
+  - ../../policies/policies/require-frontend-name.yaml
+resources:
+  - ../../resources/require-frontend-name/pod-correct.yaml
+  - ../../resources/require-frontend-name/pod-wrong.yaml
+  - ../../resources/require-frontend-name/deployment-correct.yaml
+  - ../../resources/require-frontend-name/deployment-wrong.yaml
+  - ../../resources/require-frontend-name/configmap-correct.yaml
+  - ../../resources/require-frontend-name/configmap-wrong.yaml
+  - ../../resources/require-frontend-name/secret-correct.yaml
+  - ../../resources/require-frontend-name/secret-wrong.yaml
+  - ../../resources/require-frontend-name/service-correct.yaml
+  - ../../resources/require-frontend-name/service-wrong.yaml
+results:
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/frontend-nginx
+    kind: Pod
+    result: pass
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/my-pod
+    kind: Pod
+    result: fail
+
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/frontend-app
+    kind: Deployment
+    result: pass
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/app-backend
+    kind: Deployment
+    result: fail
+
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/frontend-config
+    kind: ConfigMap
+    result: pass
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/config
+    kind: ConfigMap
+    result: fail
+
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/frontend-secret
+    kind: Secret
+    result: pass
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/secret
+    kind: Secret
+    result: fail
+
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/frontend-svc
+    kind: Service
+    result: pass
+  - policy: require-frontend-name
+    rule: name-must-start-with-frontend
+    resources:
+      - frontend/svc
+    kind: Service
+    result: fail
+

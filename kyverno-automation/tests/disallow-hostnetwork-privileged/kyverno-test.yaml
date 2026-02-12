@@ -1,0 +1,128 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: disallow-hostnetwork-privileged
+policies:
+  - ../../policies/policies/disallow-hostnetwork-privileged.yaml
+resources:
+  - ../../resources/disallow-hostnetwork-privileged/pod-safe.yaml       # hostNetwork: false, containers/initContainers privileged: false
+  - ../../resources/disallow-hostnetwork-privileged/pod-bad.yaml        # hostNetwork: true or privileged: true
+
+  - ../../resources/disallow-hostnetwork-privileged/deployment-safe.yaml   # PodTemplate ok
+  - ../../resources/disallow-hostnetwork-privileged/deployment-bad.yaml    # PodTemplate hostNetwork:true / privileged:true
+
+  - ../../resources/disallow-hostnetwork-privileged/statefulset-safe.yaml
+  - ../../resources/disallow-hostnetwork-privileged/statefulset-bad.yaml
+
+  - ../../resources/disallow-hostnetwork-privileged/daemonset-safe.yaml
+  - ../../resources/disallow-hostnetwork-privileged/daemonset-bad.yaml
+
+results:
+  # Pods
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-pod
+    resources:
+      - frontend/pod-safe
+    kind: Pod
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-pod
+    resources:
+      - frontend/pod-bad
+    kind: Pod
+    result: fail
+
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-pod
+    resources:
+      - frontend/pod-safe
+    kind: Pod
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-pod
+    resources:
+      - frontend/pod-bad
+    kind: Pod
+    result: fail
+
+  # Deployment
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-controllers
+    resources:
+      - frontend/deployment-safe
+    kind: Deployment
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-controllers
+    resources:
+      - frontend/deployment-bad
+    kind: Deployment
+    result: fail
+
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-controllers
+    resources:
+      - frontend/deployment-safe
+    kind: Deployment
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-controllers
+    resources:
+      - frontend/deployment-bad
+    kind: Deployment
+    result: fail
+
+  # StatefulSet
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-controllers
+    resources:
+      - frontend/statefulset-safe
+    kind: StatefulSet
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-controllers
+    resources:
+      - frontend/statefulset-bad
+    kind: StatefulSet
+    result: fail
+
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-controllers
+    resources:
+      - frontend/statefulset-safe
+    kind: StatefulSet
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-controllers
+    resources:
+      - frontend/statefulset-bad
+    kind: StatefulSet
+    result: fail
+
+  # DaemonSet
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-controllers
+    resources:
+      - frontend/daemonset-safe
+    kind: DaemonSet
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-hostnetwork-controllers
+    resources:
+      - frontend/daemonset-bad
+    kind: DaemonSet
+    result: fail
+
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-controllers
+    resources:
+      - frontend/daemonset-safe
+    kind: DaemonSet
+    result: pass
+  - policy: no-hostnetwork-privileged
+    rule: forbid-privileged-containers-controllers
+    resources:
+      - frontend/daemonset-bad
+    kind: DaemonSet
+    result: fail
+

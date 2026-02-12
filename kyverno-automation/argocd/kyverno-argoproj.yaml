@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+spec:
+  description: kyverno-policies environment project
+
+  sourceRepos:
+  - http://192.168.0.130/security/kyverno-policies.git
+
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: "*"
+
+  clusterResourceWhitelist:
+  - group: ""
+    kind: Namespace
+  - group: kyverno.io
+    kind: ClusterPolicy
+
+  namespaceResourceWhitelist:
+  - group: kyverno.io
+    kind: Policy
+

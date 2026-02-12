@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: daemonset-safe
+  namespace: frontend
+spec:
+  selector:
+    matchLabels:
+      app: safe
+  template:
+    metadata:
+      labels:
+        app: safe
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          securityContext:
+            privileged: false
+      initContainers:
+        - name: init
+          image: busybox
+          command: ["echo", "init safe"]
+          securityContext:
+            privileged: false
+      hostNetwork: false
+

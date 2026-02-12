@@ -1,0 +1,74 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: no-hostnetwork-privileged
+  namespace: frontend
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: forbid-hostnetwork-pod
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Pod must not use hostNetwork"
+        pattern:
+          spec:
+            hostNetwork: false
+
+    - name: forbid-privileged-containers-pod
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "All containers and initContainers must not be privileged"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  privileged: false
+            initContainers:
+              - securityContext:
+                  privileged: false
+
+    - name: forbid-hostnetwork-controllers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+      validate:
+        message: "PodTemplate must not use hostNetwork"
+        pattern:
+          spec:
+            template:
+              spec:
+                hostNetwork: false
+
+    - name: forbid-privileged-containers-controllers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+      validate:
+        message: "All PodTemplate containers and initContainers must not be privileged"
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - securityContext:
+                      privileged: false
+                initContainers:
+                  - securityContext:
+                      privileged: false
+

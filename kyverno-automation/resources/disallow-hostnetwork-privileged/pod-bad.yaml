@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-bad
+  namespace: frontend
+spec:
+  containers:
+    - name: app
+      image: nginx:alpine
+      securityContext:
+        privileged: true
+  initContainers:
+    - name: init
+      image: busybox
+      command: ["echo", "init bad"]
+      securityContext:
+        privileged: true
+  hostNetwork: true

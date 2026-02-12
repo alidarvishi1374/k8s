@@ -1,0 +1,22 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: disallow-latest-tag
+policies:
+  - ../../policies/clusterpolicies/disallow-latest-tag.yaml
+resources:
+  - ../../resources/disallow-latest/pod-with-latest.yaml
+  - ../../resources/disallow-latest/pod-without-latest.yaml
+results:
+  - policy: disallow-latest-tag
+    rule: disallow-latest
+    resources:
+      - default/pod-with-latest
+    kind: Pod
+    result: fail
+  - policy: disallow-latest-tag
+    rule: disallow-latest
+    resources:
+      - default/pod-without-latest
+    kind: Pod
+    result: pass

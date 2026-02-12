@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset-bad
+  namespace: frontend
+spec:
+  serviceName: "bad"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bad
+  template:
+    metadata:
+      labels:
+        app: bad
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          securityContext:
+            privileged: true
+      initContainers:
+        - name: init
+          image: busybox
+          command: ["echo", "init bad"]
+          securityContext:
+            privileged: true
+      hostNetwork: true

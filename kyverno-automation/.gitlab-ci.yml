@@ -1,0 +1,46 @@
+stages:
+  - test
+  - merge
+
+variables:
+  KYVERNO_VERSION: "v1.16.2-1"
+  KYVERNO_IMAGE: "192.168.135.132:8081/docker-local/kyverno/kyverno-cli:${KYVERNO_VERSION}"
+
+kyverno-test:
+  stage: test
+  image:
+    name: $KYVERNO_IMAGE
+    entrypoint: [""]
+  script:
+    - echo "Running Kyverno tests and generating JUnit report..."
+    - kyverno version
+    - kyverno test tests/ --fail-only
+  tags:
+    - security
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "test"'
+
+merge-test-to-main:
+  stage: merge
+  image: 192.168.135.132:8081/docker-local/alpine:3.18
+  needs: [kyverno-test]
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.email "gitlab-runner@local.net"
+    - git config --global user.name "Gitlab Runner"
+    - git config --global credential.helper store
+    - echo "http://$GITLAB_USER:$GITLAB_TOKEN@192.168.135.132:81" > ~/.git-credentials
+    - git remote set-url origin http://$GITLAB_USER:$GITLAB_TOKEN@192.168.135.132:81/security/kyverno-policies.git
+    - git fetch origin
+  script:
+    - git checkout test
+    - git pull origin test --rebase
+    - git checkout main
+    - git pull origin main --rebase
+    - git merge --no-ff test -m "Merge branch 'test' into main [ci skip]"
+    - git push origin main
+  tags:
+    - security
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "test"'
+      when: on_success

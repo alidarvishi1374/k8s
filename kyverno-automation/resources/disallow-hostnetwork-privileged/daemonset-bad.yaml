@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: daemonset-bad
+  namespace: frontend
+spec:
+  selector:
+    matchLabels:
+      app: bad
+  template:
+    metadata:
+      labels:
+        app: bad
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          securityContext:
+            privileged: true
+      initContainers:
+        - name: init
+          image: busybox
+          command: ["echo", "init bad"]
+          securityContext:
+            privileged: true
+      hostNetwork: true

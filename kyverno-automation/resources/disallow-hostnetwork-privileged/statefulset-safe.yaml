@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset-safe
+  namespace: frontend
+spec:
+  serviceName: "safe"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: safe
+  template:
+    metadata:
+      labels:
+        app: safe
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          securityContext:
+            privileged: false
+      initContainers:
+        - name: init
+          image: busybox
+          command: ["echo", "init safe"]
+          securityContext:
+            privileged: false
+      hostNetwork: false

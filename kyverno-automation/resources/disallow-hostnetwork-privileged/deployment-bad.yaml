@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-bad
+  namespace: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bad
+  template:
+    metadata:
+      labels:
+        app: bad
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          securityContext:
+            privileged: true
+      initContainers:
+        - name: init
+          image: busybox
+          command: ["echo", "init bad"]
+          securityContext:
+            privileged: true
+      hostNetwork: true

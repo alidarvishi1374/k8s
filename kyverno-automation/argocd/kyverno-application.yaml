@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-app
+  namespace: argocd
+spec:
+  project: kyverno-policies
+
+  source:
+    repoURL: http://192.168.0.130/security/kyverno-policies.git
+    targetRevision: main
+    path: policies
+    directory:
+      recurse: true  
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno-policies
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
