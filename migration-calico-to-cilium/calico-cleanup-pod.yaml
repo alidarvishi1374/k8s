@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cilium-killed-calico
+  namespace: kube-system
+spec:
+  containers:
+  - args:
+    - -t
+    - "1"
+    - -m
+    - -u
+    - -i
+    - -n
+    - sleep
+    - "14000"
+    command:
+    - nsenter
+    image: docker.io/alpine:3.13
+    imagePullPolicy: IfNotPresent
+    name: shell
+    securityContext:
+      privileged: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  nodeName: __CHANGEME__
+  preemptionPolicy: PreemptLowerPriority
+  priority: 2000001000
+  priorityClassName: system-node-critical
+  restartPolicy: Never
+  securityContext: {}
+  tolerations:
+  - operator: Exists
