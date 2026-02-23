@@ -1,0 +1,26 @@
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: allow-frontend-to-backend-clusterwide
+spec:
+  endpointSelector:
+    matchLabels:
+      role: backend
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        role: frontend
+        io.cilium.k8s.policy.cluster: cluster02
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        role: frontend
+        io.cilium.k8s.policy.cluster: cluster02
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP

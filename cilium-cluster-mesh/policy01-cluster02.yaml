@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-nginx-from-clusters
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      app: nginx-cluster02
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: nginx-cluster01
+        io.cilium.k8s.policy.cluster: cluster01
+    - matchLabels:
+        app: nginx-cluster02
+        io.cilium.k8s.policy.cluster: cluster02
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP

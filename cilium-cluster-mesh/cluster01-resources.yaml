@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginxcluster01
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-cluster01
+  template:
+    metadata:
+      labels:
+        app: nginx-cluster01
+    spec:
+      containers:
+      - name: nginx
+        image: 192.168.0.130:8081/docker-local/nginx/nginx:1.20
+        env:
+        - name: CLUSTER_NAME
+          value: cluster01
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        command: ["/bin/sh","-c"]
+        args:
+        - |
+          cat <<EOF > /usr/share/nginx/html/index.html
+          Cluster: ${CLUSTER_NAME}
+          PodIP: ${POD_IP}
+          EOF
+          nginx -g "daemon off;"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  annotations:
+    service.cilium.io/global: "true"
+spec:
+  selector:
+    app: nginx-cluster01
+  ports:
+  - port: 80
