@@ -109,7 +109,7 @@ kubectl get pods -A --context cluster02
 
 ```bash
 # Exec into a pod in cluster01
-kubectl exec -it <pod-name> --context cluster01 -- curl http://nginx.default.svc.global
+kubectl exec -it <pod-name> --context cluster01 -- curl http://nginx.default.svc.cluster.local
 ```
 
 * You should see the `Cluster` and `PodIP` values from cluster02 pod.
