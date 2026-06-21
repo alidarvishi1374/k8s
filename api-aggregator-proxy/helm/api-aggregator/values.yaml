@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: <myrepos>/api-aggregator
+  tag: main-92770750
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  enable: true
+  name: custom-api-local-sa
+
+namespaceLabel:
+  key: team
+
+service:
+  name: custom-api-local-svc
+  type: ClusterIP
+  port: 443
+  targetPort: 8443
+
+container:
+  port: 8443
+
+nodeSelector:
+  platform.pod.io/workload-class: infra
+
+tolerations:
+  - key: platform.pod.io/dedicated
+    operator: Equal
+    value: infra
+    effect: NoSchedule
+
+tls:
+  secretName: custom-api-tls
+
+proxyCA:
+  secretName: proxy-ca-secret
+
+apiService:
+  enabled: true
+  name: v1.custom.api.local
+  group: custom.api.local
+  version: v1
+  caBundle: ""
+
+rbac:
+  namespaceReader: true
+  subjectAccessReview: true

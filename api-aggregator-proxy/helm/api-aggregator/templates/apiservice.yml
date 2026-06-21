@@ -1,0 +1,15 @@
+{{- if .Values.apiService.enabled }}
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: "{{ .Values.apiService.name }}"
+spec:
+  service:
+    name: "{{ .Values.service.name }}"
+    namespace: "{{ .Release.Namespace }}"
+  group: "{{ .Values.apiService.group }}"
+  version: "{{ .Values.apiService.version }}"
+  groupPriorityMinimum: 2000
+  versionPriority: 10
+  caBundle: "{{ .Values.apiService.caBundle }}"
+{{- end }}

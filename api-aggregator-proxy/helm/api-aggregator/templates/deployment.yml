@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "api-aggregator.fullname" . | trim }}'
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: "{{ include "api-aggregator.name" . }}"
+  template:
+    metadata:
+      labels:
+        app: '{{ include "api-aggregator.name" . }}'
+    spec:
+      serviceAccountName: "{{ .Values.serviceAccount.name }}"
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      containers:
+      - name: api-aggregator
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        ports:
+        - containerPort: {{ .Values.container.port }}
+        env:
+        - name: NAMESPACE_TEAM_LABEL
+          value: "{{ .Values.namespaceLabel.key }}"
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        - name: proxy-ca
+          mountPath: /ca/front-proxy-ca.crt
+          subPath: ca.crt
+          readOnly: true
+        livenessProbe:
+          exec:
+            command:
+            - python3
+            - -c
+            - |
+              import requests
+              r=requests.get(
+              "https://localhost:8443/healthz",
+              cert=("/tls/tls.crt","/tls/tls.key"),
+              verify="/ca/front-proxy-ca.crt")
+              assert r.status_code==200
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - python3
+            - -c
+            - |
+              import requests
+              r=requests.get(
+              "https://localhost:8443/healthz",
+              cert=("/tls/tls.crt","/tls/tls.key"),
+              verify="/ca/front-proxy-ca.crt")
+              assert r.status_code==200
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: tls
+        secret:
+          secretName: "{{ .Values.tls.secretName }}"
+      - name: proxy-ca
+        secret:
+          secretName: "{{ .Values.proxyCA.secretName }}"

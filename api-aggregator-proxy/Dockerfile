@@ -1,9 +1,18 @@
-# Dockerfile
-FROM python:3.11-slim
+FROM opkbhfpspsp0201.fns/python/python:3.11-slim
 
 WORKDIR /app
-COPY main.py /app/app.py
-RUN pip install --no-cache-dir flask requests kubernetes
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# install dependencies first (cache-friendly)
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# copy full project (IMPORTANT for your modular structure)
+COPY . .
 
 EXPOSE 8443
-CMD ["python", "/app/app.py"]
+
+CMD ["python", "main.py"]

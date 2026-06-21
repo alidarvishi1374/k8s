@@ -1,0 +1,6 @@
+apiVersion: v2
+name: api-aggregator
+description: Kubernetes API Aggregator extension service
+type: application
+version: 0.1.0
+appVersion: "latest"
