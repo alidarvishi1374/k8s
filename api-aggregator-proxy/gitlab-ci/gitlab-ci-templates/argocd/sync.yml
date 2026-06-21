@@ -1,5 +1,5 @@
 .argocd:sync:
-  image: opkbhfpspsp0101.fns/argoproj/argocd:v3.4.3
+  image: <argocd_cd_image>
 
   variables:
     ARGOCD_OPTS: "--grpc-web"
