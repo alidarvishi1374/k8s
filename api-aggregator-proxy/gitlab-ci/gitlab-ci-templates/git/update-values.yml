@@ -8,7 +8,7 @@
     GIT_STRATEGY: none
 
   before_script:
-    - git config --global user.email "gitlab-ci@fanap-infra.ir"
+    - git config --global user.email "gitlab-ci@local"
     - git config --global user.name "GitLab CI"
 
   script:
