@@ -1,0 +1,42 @@
+.helm:publish:
+  image: 
+    name: $CI_REGISTRY/helm-charts/alpine/helm-custom:4.2
+    entrypoint: [""]
+
+  stage: package
+
+  tags:
+    - custom-apps
+
+  before_script:
+    # --------------------------------
+    # TRUST HARBOR CA
+    # --------------------------------
+    - cp /etc/docker/certs.d/$CI_REGISTRY/ca.crt /usr/local/share/ca-certificates/harbor-ca.crt
+    - update-ca-certificates --fresh
+
+    # --------------------------------
+    # HELM LOGIN TO OCI REGISTRY
+    # --------------------------------
+    - echo "$CI_REGISTRY_PASSWORD" | helm registry login "$CI_REGISTRY" -u "$CI_REGISTRY_USERNAME" --password-stdin
+
+  script:
+    # --------------------------------
+    # UPDATE CHART VERSION
+    # --------------------------------
+    - 'sed -i "s/^version:.*/version: $CHART_VERSION/" helm/$CI_PROJECT_NAME/Chart.yaml'
+
+    # --------------------------------
+    # UPDATE APP VERSION
+    # --------------------------------
+    - 'sed -i "s/^appVersion:.*/appVersion: \"$APP_VERSION\"/" helm/$CI_PROJECT_NAME/Chart.yaml'
+
+    # --------------------------------
+    # PACKAGE CHART
+    # --------------------------------
+    - helm package helm/$CI_PROJECT_NAME
+
+    # --------------------------------
+    # PUSH CHART TO HARBOR OCI
+    # --------------------------------
+    - helm push $CI_PROJECT_NAME-$CHART_VERSION.tgz oci://"$CI_REGISTRY"/helm-charts

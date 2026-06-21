@@ -1,0 +1,93 @@
+.git:update-image:
+  stage: deploy
+
+  tags:
+    - custom-apps
+
+  variables:
+    GIT_STRATEGY: none
+
+  before_script:
+    - git config --global user.email "gitlab-ci@fanap-infra.ir"
+    - git config --global user.name "GitLab CI"
+
+  script:
+    # --------------------------------
+    # CLONE REPO
+    # --------------------------------
+    - git clone http://$GITLAB_CI_USERNAME:$GITLAB_CI_TOKEN@$GITOPS_REPO repo
+    - cd repo/$CI_PROJECT_NAME
+
+    # --------------------------------
+    # UPDATE IMAGE TAG
+    # --------------------------------
+    - 'sed -i "/image:/,/^[^ ]/ s|tag:.*|tag: $IMAGE_TAG_SHA|" helm-values/values.yaml'
+
+    # --------------------------------
+    # CHECK CHANGES
+    # --------------------------------
+    - git diff --quiet && echo "No changes" && exit 0
+
+    # --------------------------------
+    # COMMIT + PUSH
+    # --------------------------------
+    - git add helm-values/values.yaml
+    - git commit -m "Update image to $IMAGE_TAG_SHA"
+    - git push origin HEAD:main
+
+.git:update-chart-version:
+  stage: package
+
+  tags:
+    - custom-apps
+    
+  before_script:
+
+    # --------------------------------
+    # CONFIGURE GIT USER
+    # --------------------------------
+    - git config --global user.email "gitlab-ci@local"
+    - git config --global user.name "GitLab CI"
+
+  script:
+
+    # --------------------------------
+    # CLONE ARGOCD APPLICATION REPOSITORY
+    # --------------------------------
+    - git clone http://$GITLAB_CI_USERNAME:$GITLAB_CI_TOKEN@"$GITOPS_REPO" argocd-apps
+
+    # --------------------------------
+    # ENTER REPOSITORY
+    # --------------------------------
+    - cd argocd-apps/$CI_PROJECT_NAME
+
+    # --------------------------------
+    # UPDATE HELM CHART VERSION
+    # --------------------------------
+    - |
+      sed -i \
+      "s/targetRevision: \".*\"/targetRevision: \"$CHART_VERSION\"/" \
+      "app-files/$ARGOCD_APPLICATION_FILE"
+
+    # --------------------------------
+    # COMMIT ONLY IF CHANGES EXIST
+    # --------------------------------
+    - |
+      if git diff --quiet; then
+        echo "No changes detected."
+        exit 0
+      fi
+
+    # --------------------------------
+    # COMMIT CHANGES
+    # --------------------------------
+    - git add "app-files/$ARGOCD_APPLICATION_FILE"
+
+    - |
+      git commit -m \
+      "Update $CI_PROJECT_NAME chart version to $CHART_VERSION"
+
+    # --------------------------------
+    # PUSH CHANGES
+    # --------------------------------
+    - git push origin HEAD:main

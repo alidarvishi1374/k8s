@@ -1,0 +1,46 @@
+.docker:build:
+  stage: build
+  image: $CI_REGISTRY/library/docker-custom:29-dind
+
+  services:
+    - name: $CI_REGISTRY/library/docker-custom:29-dind
+      alias: docker
+      command:
+        - dockerd
+        - --host=tcp://0.0.0.0:2375
+        - --tls=false
+  tags:
+    - custom-apps
+
+  before_script:
+    # --------------------------------
+    # TRUST HARBOR CA
+    # --------------------------------
+    - cp /etc/docker/certs.d/$CI_REGISTRY/ca.crt /usr/local/share/ca-certificates/harbor-ca.crt
+    - update-ca-certificates --fresh
+
+    # --------------------------------
+    # LOGIN TO HARBOR
+    # --------------------------------
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USERNAME" --password-stdin
+
+  script:
+    # --------------------------------
+    # BUILD IMAGE
+    # --------------------------------
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG_SHA .
+
+    # --------------------------------
+    # PUSH SHA TAG
+    # --------------------------------
+    - docker push $IMAGE_NAME:$IMAGE_TAG_SHA
+
+    # --------------------------------
+    # TAG LATEST
+    # --------------------------------
+    - docker tag $IMAGE_NAME:$IMAGE_TAG_SHA $IMAGE_NAME:$IMAGE_TAG_LATEST
+
+    # --------------------------------
+    # PUSH LATEST
+    # --------------------------------
+    - docker push $IMAGE_NAME:$IMAGE_TAG_LATEST

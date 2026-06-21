@@ -1,0 +1,45 @@
+.argocd:sync:
+  image: opkbhfpspsp0101.fns/argoproj/argocd:v3.4.3
+
+  variables:
+    ARGOCD_OPTS: "--grpc-web"
+
+  tags:
+    - custom-apps
+    
+  script:
+    - |
+      sync_app () {
+        APP=$1
+
+        echo "Waiting for operation: $APP"
+
+        argocd app wait $APP \
+          --auth-token $ARGOCD_TOKEN \
+          --server $ARGOCD_SERVER \
+          --insecure \
+          --operation \
+          --timeout 300
+
+        argocd app get $APP \
+          --auth-token $ARGOCD_TOKEN \
+          --server $ARGOCD_SERVER \
+          --insecure \
+          --refresh
+
+        argocd app wait $APP \
+          --auth-token $ARGOCD_TOKEN \
+          --server $ARGOCD_SERVER \
+          --insecure \
+          --sync \
+          --timeout 300
+
+        argocd app wait $APP \
+          --auth-token $ARGOCD_TOKEN \
+          --server $ARGOCD_SERVER \
+          --insecure \
+          --health \
+          --timeout 300
+      }
+
+    - sync_app "$ARGOCD_APP"

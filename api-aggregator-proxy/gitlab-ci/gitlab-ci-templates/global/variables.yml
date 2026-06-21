@@ -1,0 +1,29 @@
+variables:
+  # =============================
+  # IMAGE
+  # =============================
+  CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
+
+  BRANCH_NAME: $CI_COMMIT_REF_SLUG
+  SHORT_SHA: $CI_COMMIT_SHORT_SHA
+
+  IMAGE_TAG_SHA: $BRANCH_NAME-$SHORT_SHA
+  IMAGE_TAG_LATEST: latest
+
+  # =============================
+  # VERSIONING
+  # =============================
+  CHART_VERSION: "0.1.${CI_PIPELINE_IID}"
+  APP_VERSION: "${CI_COMMIT_SHORT_SHA}"
+
+  # =============================
+  # DOCKER
+  # =============================
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+  # =============================
+  # GITOPS (generic)
+  # =============================
+  GITOPS_REPO: "<gitops-repo>"
