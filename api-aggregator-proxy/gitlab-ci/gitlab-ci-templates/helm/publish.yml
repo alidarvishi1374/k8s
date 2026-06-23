@@ -22,6 +22,16 @@
 
   script:
     # --------------------------------
+    # LINT CHART (syntax + best practices)
+    # --------------------------------
+    - helm lint helm/$CI_PROJECT_NAME
+
+    # --------------------------------
+    # TEMPLATE RENDER TEST (MOST IMPORTANT)
+    # --------------------------------
+    - helm template test-release helm/$CI_PROJECT_NAME
+
+    # --------------------------------
     # UPDATE CHART VERSION
     # --------------------------------
     - 'sed -i "s/^version:.*/version: $CHART_VERSION/" helm/$CI_PROJECT_NAME/Chart.yaml'
