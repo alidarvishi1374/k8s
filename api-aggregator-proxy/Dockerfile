@@ -5,6 +5,9 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# create non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+
 # install dependencies first (cache-friendly)
 COPY requirements.txt .
 
