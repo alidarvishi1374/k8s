@@ -1,4 +1,4 @@
-FROM opkbhfpspsp0201.fns/python/python:3.11-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -13,8 +13,14 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# copy full project (IMPORTANT for your modular structure)
+# copy full project
 COPY . .
+
+# change ownership of app files
+RUN chown -R appuser:appuser /app
+
+# run as non-root
+USER appuser
 
 EXPOSE 8443
 
