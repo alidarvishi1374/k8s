@@ -1,0 +1,24 @@
+image:
+  repository: kubernetes-dashboard-proxy
+  tag: main-1a6193c2
+  pullPolicy: IfNotPresent
+
+namespace: kubernetes-dashboard
+
+serviceAccount:
+  name: ns-access-sa
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+service:
+  port: 8080

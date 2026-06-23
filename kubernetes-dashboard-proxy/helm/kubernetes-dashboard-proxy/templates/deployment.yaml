@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubernetes-dashboard-proxy
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: proxy
+
+  template:
+    metadata:
+      labels:
+        app: proxy
+
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+
+      containers:
+      - name: proxy
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        ports:
+        - containerPort: {{ .Values.service.port }}
+
+        resources:
+{{ toYaml .Values.resources | indent 10 }}

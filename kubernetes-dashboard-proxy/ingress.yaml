@@ -1,4 +1,4 @@
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: dashboard-api-rewrite
@@ -14,14 +14,14 @@ metadata:
   name: dashboard-api-redirect
   namespace: kubernetes-dashboard
   annotations:
-    kubernetes.io/ingress.class: traefik-internal
+    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: kubernetes-dashboard-dashboard-api-rewrite@kubernetescrd
 spec:
-  ingressClassName: traefik-internal
+  ingressClassName: traefik
   rules:
-  - host: dashboard.test
+  - host: dashboard.local
     http:
       paths:
       - path: /api/v1/namespace
@@ -30,7 +30,8 @@ spec:
           service:
             name: proxy-svc
             port:
-              number: 80
+              number: 8080
   tls:
   - hosts:
-    - dashboard.test
+    - dashboard.local
+

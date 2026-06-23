@@ -51,10 +51,9 @@
 
 ## Repository Structure
 
-* `app.py` — Main Flask application implementing logic and Kubernetes API interaction.
+* `app` — Main Flask application implementing logic and Kubernetes API interaction.
 * `Dockerfile` — Builds a minimal image based on `python:3.11-slim` (or your private registry image).
-* `requirements.txt` — Dependencies (`flask`, `kubernetes`).
-* `resources.yaml` — Kubernetes manifests for ServiceAccount, ClusterRole, ClusterRoleBinding, Deployment, and Service.
+* `requirements.txt` — Dependencies (`flask`, `kubernetes`, `gunicorn`).
 * `ingress.yaml` — Traefik Middleware and Ingress for HTTPS routing.
 
 ---
@@ -63,7 +62,7 @@
 
 * A running Kubernetes cluster with valid `kubectl` access.
 * `cluster-admin` privileges for deploying ClusterRole and ClusterRoleBinding.
-* A DNS/host mapping (e.g., `dashboard.sb.sre`) pointing to your ingress controller.
+* A DNS/host mapping (e.g., `dashboard.local`) pointing to your ingress controller.
 * Docker registry access if you plan to push your image.
 
 ---
@@ -80,16 +79,13 @@ pip install -r requirements.txt
 # Use local kubeconfig
 export KUBECONFIG=$HOME/.kube/config
 
-# Run the app
-python3 app.py
-# Defaults to port 80 (set PORT=8080 for local testing)
 ```
 
 ### Option 2 — Run in Docker
 
 ```bash
 docker build -t dashboard-proxy:dev .
-docker run --rm -p 8080:80 \
+docker run --rm -p 8080:8080 \
   -e KUBECONFIG=/root/.kube/config \
   -v $KUBECONFIG:/root/.kube/config:ro \
   dashboard-proxy:dev
@@ -109,14 +105,11 @@ docker build -t $IMAGE .
 docker push $IMAGE
 ```
 
-Then update `resources.yaml` with your image reference.
-
 ---
 
 ## Kubernetes Deployment
 
 ```bash
-kubectl apply -f resources.yaml
 kubectl apply -f ingress.yaml
 
 # Verify
@@ -140,13 +133,13 @@ curl -v http://<proxy-host>/healthz
 ### Fetch namespaces with token (Header)
 
 ```bash
-curl -H "Authorization: Bearer <DASHBOARD_TOKEN>" https://dashboard.sb.sre/api/v1/namespace
+curl -H "Authorization: Bearer <DASHBOARD_TOKEN>" https://dashboard.local/api/v1/namespace
 ```
 
 ### Using a Cookie
 
 ```bash
-curl -b "token=<DASHBOARD_TOKEN>" https://dashboard.sb.sre/api/v1/namespace
+curl -b "token=<DASHBOARD_TOKEN>" https://dashboard.local/api/v1/namespace
 ```
 
 ### Extract a Dashboard Token
@@ -206,6 +199,3 @@ kubectl auth can-i list namespaces --as system:serviceaccount:kubernetes-dashboa
 
 **Q:** Why doesn’t my token contain `service-account.name`?
 **A:** Likely it’s a user token or from an external identity provider. Kubernetes ServiceAccount tokens include this field.
-
-**Q:** How can I customize the response format?
-**A:** Edit the `format_dashboard_output` function in `app.py`.

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kubernetes-dashboard-proxy
+description: A Kubernetes dashboard request rewriting proxy service
+type: application
+version: 0.1.0
+appVersion: "latest"

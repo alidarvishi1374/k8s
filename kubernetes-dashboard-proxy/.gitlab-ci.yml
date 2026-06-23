@@ -1,0 +1,47 @@
+include:
+  - project: "<gitlab-ci-template-project>"
+    ref: main
+    file:
+      - "/global/variables.yml"
+      - "/stages/stages.yml"
+      - "/docker/build.yml"
+      - "/git/update-values.yml"
+      - "/helm/publish.yml"
+
+docker-build:
+  extends: .docker:build
+  rules:
+    - changes:
+        - main.py
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+        - app/**/* 
+
+update-values-image:
+  extends: .git:update-image
+  needs:
+    - job: docker-build
+  rules:
+    - changes:
+        - main.py
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+        - app/**/* 
+
+publish-chart:
+  extends: .helm:publish
+  rules:
+    - changes:
+        - helm/**/templates/**/*
+        - helm/**/Chart.yaml
+
+update-chart-value:
+  extends: .git:update-chart-version
+  needs:
+    - job: publish-chart
+  rules:
+    - changes:
+        - helm/**/templates/**/*
+        - helm/**/Chart.yaml
